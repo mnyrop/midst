@@ -1,18 +1,18 @@
 {
-  "name": "electron-react-typescript-boilerplate",
-  "productName": "electron-react-typescript-boilerplate",
+  "name": "Midst",
+  "productName": "Midst",
   "version": "0.1.1",
-  "description": "Electron application boilerplate based on Typescript, React, React Router, Webpack, React Hot Loader for rapid application development",
+  "description": "A writing app that keeps track of the author's writing process",
   "main": "../app/main.prod.js",
   "author": {
-    "name": "Manuel Klettke",
-    "email": "manuelklettke@web.de",
+    "name": "Brett Beutell",
+    "email": "brbeut@gmail.com",
     "url": "https://github.com/ManuKle"
   },
   "scripts": {
     "electron-rebuild": "node -r ts-node/register ../src/scripts/ElectronRebuild.ts",
     "postinstall": "npm run electron-rebuild"
   },
-  "license": "MIT",
+  "license": "SEE LICENSE IN '../LICENSE' file",
   "dependencies": {}
 }

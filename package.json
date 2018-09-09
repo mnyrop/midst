@@ -10,7 +10,7 @@
     "build-renderer": "cross-env NODE_ENV=production process.env.TS_NODE_DISABLE_WARNINGS=true node --max-old-space-size=4096 -r ts-node/register -r tsconfig-paths/register ./node_modules/webpack/bin/webpack --config src/webpack.config.renderer.prod.ts --progress --profile --colors --display-error-details",
     "dev": "cross-env START_HOT=1 process.env.TS_NODE_DISABLE_WARNINGS=true npm run start-renderer-dev",
     "electron-rebuild": "electron-rebuild --parallel --force --types prod,dev,optional --module-dir app",
-    "package": "npm run build && build --publish never",
+    "package": "npm run build && build --publish never --em.main=main.prod.js",
     "package-all": "npm run build && build -mwl",
     "package-linux": "npm run build && build --linux",
     "package-win": "npm run build && build --win --x64",
@@ -25,6 +25,7 @@
   },
   "browserslist": "electron 1.6",
   "build": {
+    "extends": null,
     "productName": "Midst",
     "appId": "org.develar.Midst",
     "files": [
@@ -76,7 +77,7 @@
     "email": "brbeut@gmail.com",
     "url": "https://github.com/brettimus"
   },
-  "license": "MIT",
+  "license": "SEE LICENSE IN 'LICENSE' file",
   "bugs": {
     "url": "https://github.com/brettimus/midst/issues"
   },
