@@ -1,0 +1,62 @@
+/*!
+ * Styles for the Slider component.
+ */
+.hem-slider {
+  position: relative;
+  box-sizing: border-box;
+  border: 1px solid #000;
+}
+
+.hem-slider.vertical {
+  width: 50px;
+  height: 200px;
+}
+
+.hem-slider.horizontal {
+  width: 200px;
+  height: 50px;
+}
+
+.hem-slider__amount {
+  position: absolute;
+  left: 0;
+  background-color: #666;
+  pointer-events: none;
+}
+
+.hem-slider.vertical .hem-slider__amount {
+  bottom: 0;
+  width: 100%;
+  min-height: 10px;
+}
+
+.hem-slider.horizontal .hem-slider__amount {
+  top: 0;
+  height: 100%;
+  min-width: 10px;
+}
+
+.hem-slider__handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #000;
+}
+
+.hem-slider.vertical .hem-slider__handle {
+  width: 100%;
+  height: 10px;
+}
+
+.hem-slider.horizontal .hem-slider__handle {
+  width: 10px;
+  height: 100%;
+}
+
+body.hem-slider-unselectable {
+  user-select: none;
+
+  * {
+    user-select: none;
+  }
+}
