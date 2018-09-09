@@ -4,6 +4,7 @@ import { AppContainer } from "react-hot-loader";
 import Root from "./containers/Root";
 import prodStore from "./store/configureStore.prod";
 import devStore from "./store/configureStore.dev";
+import 'normalize.css';
 import "./app.global.css";
 
 const configureStore =

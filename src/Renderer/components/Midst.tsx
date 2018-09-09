@@ -11,7 +11,7 @@ import * as React from 'react'
 import {Save, Folder, Settings, Eye, Rewind} from 'react-feather'
 import {Editor} from 'react-draft-wysiwyg'
 import {EditorState, convertToRaw, convertFromRaw} from 'draft-js'
-// import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css'
+import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css'
 
 // ================================================================================
 // Framework

@@ -1,8 +1,8 @@
 {
-  "name": "electron-react-typescript-boilerplate",
-  "productName": "ElectronReactTypescript",
-  "version": "0.1.1",
-  "description": "Electron application boilerplate based on React, Typescript, React Router, Webpack, React Hot Loader for rapid application development",
+  "name": "midst",
+  "productName": "Midst",
+  "version": "0.1.0",
+  "description": "A writing app that keeps track of the author's writing process",
   "scripts": {
     "build": "concurrently \"npm run build-main\" \"npm run build-renderer\"",
     "build-dll": "cross-env NODE_ENV=development process.env.TS_NODE_DISABLE_WARNINGS=true node --max-old-space-size=4096 -r ts-node/register -r tsconfig-paths/register ./node_modules/webpack/bin/webpack --config src/webpack.config.renderer.dev.dll.ts --progress --profile --colors --display-error-details",
@@ -25,8 +25,8 @@
   },
   "browserslist": "electron 1.6",
   "build": {
-    "productName": "ElectronReactTypescript",
-    "appId": "org.develar.ElectronReactTypescript",
+    "productName": "Midst",
+    "appId": "org.develar.Midst",
     "files": [
       "dist/",
       "node_modules/",
@@ -69,16 +69,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ManuKle/electron-react-typescript-boilerplate.git"
+    "url": "git+https://github.com/brettimus/midst.git"
   },
   "author": {
-    "name": "Manuel Klettke",
-    "email": "manuelklettke@web.de",
-    "url": "https://github.com/ManuKle"
+    "name": "Brett Beutell",
+    "email": "brbeut@gmail.com",
+    "url": "https://github.com/brettimus"
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ManuKle/electron-react-typescript-boilerplate/issues"
+    "url": "https://github.com/brettimus/midst/issues"
   },
   "keywords": [
     "electron",
@@ -91,7 +91,7 @@
     "hot",
     "reload"
   ],
-  "homepage": "https://github.com/ManuKle/electron-react-typescript-boilerplate#readme",
+  "homepage": "https://github.com/brettimus/midst#readme",
   "jest": {
     "moduleFileExtensions": [
       "ts",
@@ -182,7 +182,7 @@
     "identity-obj-proxy": "^3.0.0",
     "jest": "^22.1.4",
     "minimist": "^1.2.0",
-    "node-sass": "^4.7.2",
+    "node-sass": "^4.9.3",
     "npm-logical-tree": "^1.2.1",
     "react-test-renderer": "^16.2.0",
     "redux-logger": "^3.0.6",
@@ -191,7 +191,7 @@
     "sinon": "^4.2.2",
     "spectron": "^3.8.0",
     "style-loader": "^0.20.1",
-    "stylefmt": "^6.0.0",
+    "stylefmt": "^6.0.2",
     "ts-jest": "^22.0.3",
     "ts-node": "^4.1.0",
     "tsconfig-paths": "^3.1.1",
@@ -215,6 +215,7 @@
     "font-awesome": "^4.7.0",
     "history": "^4.7.2",
     "lodash": "^4.17.10",
+    "normalize.css": "^8.0.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-draft-wysiwyg": "^1.12.13",

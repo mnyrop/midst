@@ -1,13 +1,10 @@
 # electron-react-typescript-boilerplate
 
-## A Boilerplate for Scalable Cross-Platform Desktop Apps
+## Credits 
 
-<br/>
+Original author: [Jason Grier](https://github.com/jasongrier).
 
-This boilerplate is based on v0.13.2 of the awesome [electron-react-boilerplate](https://github.com/chentsulin/electron-react-boilerplate) but written in typescript!
+This repo was created from [Manuel Klettke](https://github.com/ManuKle)'s boilerplate for Electron + Redux + Typescript, 
+which was in turn based on v0.13.2 of [electron-react-boilerplate](https://github.com/chentsulin/electron-react-boilerplate).
 
-For further information please refer to the [original repo](https://github.com/chentsulin/electron-react-boilerplate).
-
-## License
-
-MIT © [Manuel Klettke](https://github.com/ManuKle)
+For further dev / build information please refer to the [original repo](https://github.com/chentsulin/electron-react-boilerplate).
