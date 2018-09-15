@@ -8,7 +8,7 @@
  *
  * @flow
  */
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 import * as path from "path";
 import { default as MenuBuilder, DebugWindow } from "@utils/menu";
 
@@ -96,4 +96,15 @@ app.on("ready", async () => {
 
   const menuBuilder = new MenuBuilder(mainWindow as DebugWindow);
   menuBuilder.buildMenu();
+
+  // TODO - do this on side process
+  ipcMain.on('parse-raw-snapshots', (event, { corrleationId, rawSnapshotsJSON }) => {
+    // bgWindow = new BrowserWindow({ show: false });
+    // mainWindow.loadURL(`file://${__dirname}/snapshot-parser.html`);
+    const snapshots = JSON.parse(rawSnapshotsJSON);
+    event.sender.send('parsed-raw-snapshots', {
+      snapshots,
+      corrleationId
+    })
+  });
 });

@@ -13,6 +13,9 @@ import {Editor} from 'react-draft-wysiwyg'
 import {EditorState, convertToRaw, convertFromRaw} from 'draft-js'
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css'
 
+import { ipcRenderer } from 'electron';
+
+
 // ================================================================================
 // Framework
 // ================================================================================
@@ -104,6 +107,19 @@ class Midst extends React.Component<IProps, IState> {
   public componentDidMount() {
     document.body.addEventListener('keydown', this.onKeyDown)
     document.body.addEventListener('keyup', this.onKeyUp)
+
+    ipcRenderer.on('parsed-raw-snapshots', (event, { correlationId, snapshots }) => {
+      // TODO - check correlation id
+      // TODO - logic on how to handle raw snapshot data
+      console.log('snapshots!!! they are been parsed', snapshots)
+      this.setState(state => ({
+        snapshots: [...map(snapshots, convertFromRaw), ...state.snapshots],
+        replayIndex: snapshots.length + state.replayIndex
+      }), () => {
+        console.log('okay updated', this.state);
+      })
+
+    })
   }
 
   public componentWillUnmount() {
@@ -142,6 +158,7 @@ class Midst extends React.Component<IProps, IState> {
               <div className='control file-input' >
                 <Folder />
                 <input type='file'
+                  accept=".mds" // this doesn't work for some reason
                   onChange={this.onFileSelected}
                 />
               </div>
@@ -239,6 +256,9 @@ class Midst extends React.Component<IProps, IState> {
   public onEditorStateChange = (editorState: EditorState) => {
     const { snapshots } = this.state
     const latestSnapshot = editorState.getCurrentContent();
+    if (last(snapshots) === latestSnapshot) {
+      return;
+    }
     // TODO - check if this includes undo stack
     // console.group('%cState change snapshot', 'font-weight: bold; color: #0A2F51;');
     // console.log('latestSnapshot', latestSnapshot);
@@ -296,7 +316,6 @@ class Midst extends React.Component<IProps, IState> {
       rawSnapshots.push(rawSnapshot)
     }
     saveToDisk({
-      // name: 'Unititled',
       snapshots: initial(rawSnapshots),
       head: last(rawSnapshots)
     }).then((filename) => {
@@ -313,32 +332,32 @@ class Midst extends React.Component<IProps, IState> {
   private onFileSelected = (evt) => {
     evt.persist()
     const file = evt.target.files[0]
+    if (!file) {
+      console.debug('no file selected');
+      return;
+    }
     const { name, path } = file;
     if (!name.endsWith('.mds')) {
       window.alert('I can only load mds files, silly!');
       return;
     }
-    loadFromDisk(path).then(({ latest, getSnapshots }) => {
+    loadFromDisk(path).then(({ head, rawSnapshotsJSON }) => {
       console.log('loaded!')
-      const snapshots = map([latest], convertFromRaw)
-      console.log('snapshots', snapshots)
+      const snapshots = map([head], convertFromRaw)
+
+      console.log('sending raw snapshots to main thread');
+      ipcRenderer.send('parse-raw-snapshots', {
+        rawSnapshotsJSON,
+        correlationId: 'TODO'
+      });
+
       const editorState = this.createEditorState(last(snapshots));
-      console.log('editorState', editorState)
       this.setState({
         snapshots,
         actionMode: 'entering',
-        replayIndex: snapshots.length,
+        replayIndex: snapshots.length - 1,
         editorState,
       });
-
-      return getSnapshots().then(tonsOfJson => {
-        const oldSnapshots = JSON.parse(tonsOfJson);
-        this.setState(state => ({
-          snapshots: [map(oldSnapshots, convertFromRaw), ...state.snapshots],
-          replayIndex: oldSnapshots.length + replayIndex
-        }))
-      })
-      // TODO - progressively load snapshots
     }, (error) => {
       console.error('error loading!', error);
     });
