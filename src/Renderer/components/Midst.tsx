@@ -5,7 +5,7 @@
 // ================================================================================
 // External
 // ================================================================================
-import {map, last, get, isEqual} from 'lodash'
+import {map, last, get, isEqual, initial} from 'lodash'
 import * as classnames from 'classnames'
 import * as React from 'react'
 import {Save, Folder, Settings, Eye, Rewind} from 'react-feather'
@@ -20,7 +20,7 @@ import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css'
 import {IDefaultProps} from './blah'
 import {Slider} from './Slider'
 // import {saveToDisk, ISaveToDiskPayload} from 'projekt/lib/components'
-import {saveToDisk, ISaveToDiskPayload} from './save';
+import {saveToDisk, loadFromDisk, ISaveToDiskPayload} from './save';
 
 // ================================================================================
 // Project
@@ -87,7 +87,7 @@ const initialState: IState = {
 // ================================================================================
 // Decorate
 // ================================================================================
-@saveToDisk()
+// @saveToDisk()
 
 // ================================================================================
 // Init
@@ -240,18 +240,18 @@ class Midst extends React.Component<IProps, IState> {
     const { snapshots } = this.state
     const latestSnapshot = editorState.getCurrentContent();
     // TODO - check if this includes undo stack
-    console.group('%cState change snapshot', 'font-weight: bold; color: #0A2F51;');
-    console.log('latestSnapshot', latestSnapshot);
+    // console.group('%cState change snapshot', 'font-weight: bold; color: #0A2F51;');
+    // console.log('latestSnapshot', latestSnapshot);
     snapshots.push(latestSnapshot);
     const lastChangeType = editorState.getLastChangeType();
     // NOTE - this could be null, and we could ignore
-    console.log('state change, lastChangeType:', lastChangeType);
+    // console.log('state change, lastChangeType:', lastChangeType);
 
     if (snapshots.length) {
-      console.group('%cCompare last state', 'font-weight: light; color: #0A2F51;');
-      console.log('last editor snapshot', this.state.editorState.getCurrentContent().toJSON().blockMap);
-      console.log('this editor state', latestSnapshot.toJSON().blockMap);
-      console.groupEnd();
+      // console.group('%cCompare last state', 'font-weight: light; color: #0A2F51;');
+      // console.log('last editor snapshot', this.state.editorState.getCurrentContent().toJSON().blockMap);
+      // console.log('this editor state', latestSnapshot.toJSON().blockMap);
+      // console.groupEnd();
     }
 
     // const undoStack = editorState.getUndoStack();
@@ -295,11 +295,15 @@ class Midst extends React.Component<IProps, IState> {
       console.log('raw snapshot:', rawSnapshot);
       rawSnapshots.push(rawSnapshot)
     }
-    this.props.saveToDisk.saveDataAsPlainText(
-      rawSnapshots,
-      'Untitled',
-      {extension: 'mds'},
-    )
+    saveToDisk({
+      // name: 'Unititled',
+      snapshots: initial(rawSnapshots),
+      head: last(rawSnapshots)
+    }).then((filename) => {
+      console.debug('Saved file', filename);
+    }, error => {
+      console.error('Error saving file', error);
+    })
   }
 
   private toggleFocusMode = () => {
@@ -309,21 +313,51 @@ class Midst extends React.Component<IProps, IState> {
   private onFileSelected = (evt) => {
     evt.persist()
     const file = evt.target.files[0]
-    this.props.saveToDisk.loadDataFromPlainText(
-      file, {
-        requireExtension: 'mds',
-        success: (rawSnapshots) => {
-          const snapshots = map(rawSnapshots, convertFromRaw)
-          this.setState({
-            snapshots,
-            actionMode: 'entering',
-            replayIndex: snapshots.length,
-            editorState: this.createEditorState(last(snapshots)),
-          })
-        },
-        error: () => console.error('File error!'),
-      },
-    )
+    const { name, path } = file;
+    if (!name.endsWith('.mds')) {
+      window.alert('I can only load mds files, silly!');
+      return;
+    }
+    loadFromDisk(path).then(({ latest, getSnapshots }) => {
+      console.log('loaded!')
+      const snapshots = map([latest], convertFromRaw)
+      console.log('snapshots', snapshots)
+      const editorState = this.createEditorState(last(snapshots));
+      console.log('editorState', editorState)
+      this.setState({
+        snapshots,
+        actionMode: 'entering',
+        replayIndex: snapshots.length,
+        editorState,
+      });
+
+      return getSnapshots().then(tonsOfJson => {
+        const oldSnapshots = JSON.parse(tonsOfJson);
+        this.setState(state => ({
+          snapshots: [map(oldSnapshots, convertFromRaw), ...state.snapshots],
+          replayIndex: oldSnapshots.length + replayIndex
+        }))
+      })
+      // TODO - progressively load snapshots
+    }, (error) => {
+      console.error('error loading!', error);
+    });
+    // TODO
+    // this.props.saveToDisk.loadDataFromPlainText(
+    //   file, {
+    //     requireExtension: 'mds',
+    //     success: (rawSnapshots) => {
+          // const snapshots = map(rawSnapshots, convertFromRaw)
+    //       this.setState({
+    //         snapshots,
+    //         actionMode: 'entering',
+    //         replayIndex: snapshots.length,
+    //         editorState: this.createEditorState(last(snapshots)),
+    //       })
+    //     },
+    //     error: () => console.error('File error!'),
+    //   },
+    // )
   }
 
 // ================================================================================

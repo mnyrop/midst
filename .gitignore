@@ -39,3 +39,6 @@ dll
 
 .idea
 npm-debug.log.*
+
+# ignore .mds files
+*.mds
