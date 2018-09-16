@@ -39,15 +39,24 @@ export default merge.smart(baseConfig as any, {
 
   target: "electron-renderer",
 
-  entry: [
-    "react-hot-loader/patch",
-    `webpack-dev-server/client?http://localhost:${port}/`,
-    "webpack/hot/only-dev-server",
-    path.join(__dirname, "Renderer", "index.tsx")
-  ],
+  entry: {
+    'renderer.dev': [
+      "react-hot-loader/patch",
+      `webpack-dev-server/client?http://localhost:${port}/`,
+      "webpack/hot/only-dev-server",
+      path.join(__dirname, "Renderer", "index.tsx")
+    ],
+    'parser.dev': [
+      "react-hot-loader/patch",
+      `webpack-dev-server/client?http://localhost:${port}/`,
+      "webpack/hot/only-dev-server",
+      path.join(__dirname, "Parser", "index.ts")
+    ]
+  },
 
   output: {
-    publicPath: `http://localhost:${port}/dist/`
+    filename: '[name].js',
+    publicPath: `http://localhost:${port}/dist`
   },
 
   module: {

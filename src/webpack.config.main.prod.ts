@@ -55,6 +55,12 @@ export default merge.smart(baseConfig as any, {
         from: "src/Renderer/app.html",
         to: "../app/app.html"
       }
+    ]),
+    new CopyWebpackPlugin([
+      {
+        from: "src/Parser/parser.html",
+        to: "../app/parser.html"
+      }
     ])
   ],
 

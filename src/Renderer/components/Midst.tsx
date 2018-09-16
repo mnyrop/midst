@@ -15,6 +15,8 @@ import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css'
 
 import { ipcRenderer } from 'electron';
 
+const uuid = require('uuid/v4');
+
 
 // ================================================================================
 // Framework
@@ -348,15 +350,15 @@ class Midst extends React.Component<IProps, IState> {
       console.log('sending raw snapshots to main thread');
       ipcRenderer.send('parse-raw-snapshots', {
         rawSnapshotsJSON,
-        correlationId: 'TODO'
+        correlationId: uuid()
       });
 
       const editorState = this.createEditorState(last(snapshots));
       this.setState({
         snapshots,
+        editorState,
         actionMode: 'entering',
         replayIndex: snapshots.length - 1,
-        editorState,
       });
     }, (error) => {
       console.error('error loading!', error);

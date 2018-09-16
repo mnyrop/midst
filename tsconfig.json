@@ -44,7 +44,12 @@
     "useBabel": true,
     "useCache": true
   },
-  "include": ["src/**/*"],
+  "include": [
+      "/var/folders/**/*.tsx",
+      "/var/folders/**/*.ts",
+      "./src/**/*.tsx",
+      "./src/**/*.ts"
+  ],
   "exclude": [
     ".awcache",
     ".chrome",
