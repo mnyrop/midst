@@ -82,7 +82,7 @@ const noToolbar = {
 const initialState: IState = {
   actionMode: 'entering',
   viewMode: 'full',
-  snapshots: [],
+  snapshots: [EditorState.createEmpty()],
   replayIndex: 0,
   editorState: EditorState.createEmpty(),
   replayState: EditorState.createEmpty(),
@@ -267,23 +267,22 @@ class Midst extends React.Component<IProps, IState> {
   public onEditorStateChange = (editorState: EditorState) => {
     const { snapshots } = this.state
     const latestSnapshot = editorState.getCurrentContent();
-    if (last(snapshots) === latestSnapshot) {
-      return;
+    if (last(snapshots) !== latestSnapshot) {
+      snapshots.push(latestSnapshot);
     }
     // TODO - check if this includes undo stack
     // console.group('%cState change snapshot', 'font-weight: bold; color: #0A2F51;');
     // console.log('latestSnapshot', latestSnapshot);
-    snapshots.push(latestSnapshot);
-    const lastChangeType = editorState.getLastChangeType();
+    // const lastChangeType = editorState.getLastChangeType();
     // NOTE - this could be null, and we could ignore
     // console.log('state change, lastChangeType:', lastChangeType);
 
-    if (snapshots.length) {
+    // if (snapshots.length) {
       // console.group('%cCompare last state', 'font-weight: light; color: #0A2F51;');
       // console.log('last editor snapshot', this.state.editorState.getCurrentContent().toJSON().blockMap);
       // console.log('this editor state', latestSnapshot.toJSON().blockMap);
       // console.groupEnd();
-    }
+    // }
 
     // const undoStack = editorState.getUndoStack();
     // console.log('state change, undoStack:', undoStack);
@@ -296,8 +295,8 @@ class Midst extends React.Component<IProps, IState> {
     //   console.log('state change, undoStack head value, json', latestUndoableOp.toJSON());      
 
     // }
-    console.groupEnd();
-    this.setState({editorState, snapshots})
+    // console.groupEnd();
+    this.setState({ editorState, snapshots })
   }
 
   public enterReplayMode = async (evt) => {
