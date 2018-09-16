@@ -124,6 +124,12 @@ class Midst extends React.Component<IProps, IState> {
     })
   }
 
+  public componentDidUpdate(prevProps, prevState) {
+    if (this.state.actionMode !== prevState.actionMode) {
+      console.log('action mode changed')
+    }
+  }
+
   public componentWillUnmount() {
     document.body.removeEventListener('keydown', this.onKeyDown)
     document.body.removeEventListener('keyup', this.onKeyUp)
@@ -210,7 +216,10 @@ class Midst extends React.Component<IProps, IState> {
               direction='horizontal'
               value={this.state.replayIndex / (this.state.snapshots.length - 1)}
               onChange={(value) => {
+                console.log('yo value', value);
                 const replayIndex = Math.ceil((this.state.snapshots.length - 1) * value)
+                console.log('new index', replayIndex);
+                console.log('all things', this.state.snapshots.length);
                 this.setState({
                   replayIndex,
                   replayState: this.createEditorState(this.state.snapshots[replayIndex]),
