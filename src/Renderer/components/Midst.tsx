@@ -10,7 +10,7 @@ import * as classnames from 'classnames'
 import * as React from 'react' // LOL typescript
 import {Save, Folder, Settings, Eye, Rewind} from 'react-feather'
 import {Editor} from 'react-draft-wysiwyg'
-import {EditorState, convertToRaw, convertFromRaw} from 'draft-js'
+import {EditorState, convertToRaw, convertFromRaw, Modifier} from 'draft-js'
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css'
 
 import { ipcRenderer } from 'electron';
@@ -85,10 +85,7 @@ const initialState: IState = {
   heldKeyCode: null,
 }
 
-// ================================================================================
-// Decorate
-// ================================================================================
-// @saveToDisk()
+const tabCharacter = "\t";
 
 // ================================================================================
 // Init
@@ -171,6 +168,7 @@ class Midst extends React.Component<IProps, IState> {
         )}>
           {actionMode === 'entering' &&
             <Editor
+              onTab={this.handleTab}
               editorState={this.state.editorState}
               onEditorStateChange={this.onEditorStateChange}
               toolbar={viewMode === 'full' ? toolbar : noToolbar}
@@ -233,6 +231,21 @@ class Midst extends React.Component<IProps, IState> {
       replayIndex: snapshots.length + state.replayIndex
     }), () => {
       console.debug('okay i updated the editor with previous snapshots', this.state);
+    });
+  }
+
+  private handleTab = (e) => {
+    e.preventDefault();
+
+    const currentState = this.state.editorState;
+    const newContentState = Modifier.replaceText(
+      currentState.getCurrentContent(),
+      currentState.getSelection(),
+      tabCharacter
+    );
+
+    this.setState({ 
+      editorState: EditorState.push(currentState, newContentState, 'insert-characters')
     });
   }
 
@@ -324,7 +337,6 @@ class Midst extends React.Component<IProps, IState> {
       return;
     }
     const { name, path } = file;
-    // TODO - is there a way to blur anything that's not an MDS file?
     if (!name.endsWith('.mds')) {
       window.alert('I can only load mds files, silly!');
       return;
