@@ -6,8 +6,8 @@
  * When running `npm run build` or `npm run build-main`, this file is compiled to
  * `./app/main.prod.js` using webpack. This gives us some performance wins.
  *
- * @flow
  */
+
 import { app, BrowserWindow, ipcMain } from "electron";
 import * as path from "path";
 import { default as MenuBuilder, DebugWindow } from "@utils/menu";
@@ -36,12 +36,8 @@ const installExtensions = async () => {
 
   return Promise.all(
     extensions.map(name => installer.default(installer[name], forceDownload))
-  ).catch(console.log);
+  ).catch(console.error);
 };
-
-/**
- * Add event listeners...
- */
 
 app.on("window-all-closed", () => {
   // Respect the OSX convention of having the application in memory even
@@ -59,17 +55,16 @@ app.on("ready", async () => {
     await installExtensions();
   }
 
-  let {height} = require('electron').screen.getPrimaryDisplay().size;
+  const { size } = require('electron').screen.getPrimaryDisplay()
+  const { height } = size;
 
   mainWindow = new BrowserWindow({
-    show: false,
-    // width: 1024,
-    // height: 728,
-    width: height,
     height,
+    width: height,
+    show: false,
     resizable: true,
     transparent: true,
-    titleBarStyle: 'hidden',
+    titleBarStyle: 'hidden', // NOTE this logs an error in dev on macOS, but it's not an error. see: https://github.com/electron/electron/issues/11150
   });
 
   if (process.env.NODE_ENV === "development") {
@@ -80,9 +75,7 @@ app.on("ready", async () => {
     mainWindow.loadURL(`file://${__dirname}/app.html`);
   }
 
-  // @TODO: Use 'ready-to-show' event
-  //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
-  mainWindow!.webContents.on("did-finish-load", () => {
+  mainWindow!.once("ready-to-show", () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
@@ -90,6 +83,7 @@ app.on("ready", async () => {
     mainWindow.focus();
   });
 
+  // TODO - allow reopening windows...?
   mainWindow!.on("closed", () => {
     mainWindow = null;
   });
@@ -99,7 +93,7 @@ app.on("ready", async () => {
 
   const ParsingWindows = new Map();
 
-  ipcMain.on('parse-raw-snapshots', (event, { correlationId, rawSnapshotsJSON }) => {
+  const parseRawSnapshots = ({ correlationId, rawSnapshotsJSON }) => {
     const bgWindow = new BrowserWindow();
     if (process.env.NODE_ENV === "development") {
       bgWindow!.loadURL(
@@ -111,23 +105,29 @@ app.on("ready", async () => {
 
     ParsingWindows.set(correlationId, bgWindow);
 
-    console.log('Hey i started some stuff');
     bgWindow!.webContents.on("did-finish-load", () => {
-      console.log('YOYOYOYOYOYOYOYOO');
+      console.debug('Sending raw snapshots to background window');
       bgWindow.webContents.send('parse-raw-snapshots', { correlationId, rawSnapshotsJSON });
     });
 
     bgWindow.on('error', () => {
-      console.log('bg window error');
-    })
-  });
+      console.error('bg window error');
+    })    
+  };
 
-  ipcMain.on('parsed-raw-snapshots', (event, { correlationId, snapshots }) => {
-    console.log('hooooly shit did this work?')
+  const handleParsedSnapshots = ({ correlationId, snapshots }) => {
     mainWindow.webContents.send('parsed-raw-snapshots', { correlationId, snapshots });
     const bgWindow = ParsingWindows.get(correlationId);
     if (bgWindow) {
       bgWindow.close();
     }
+  };
+
+  ipcMain.on('parse-raw-snapshots', (event, { correlationId, rawSnapshotsJSON }) => {
+    parseRawSnapshots({ correlationId, rawSnapshotsJSON });
+  });
+
+  ipcMain.on('parsed-raw-snapshots', (event, { correlationId, snapshots }) => {
+    handleParsedSnapshots({ correlationId, snapshots });
   })
 });

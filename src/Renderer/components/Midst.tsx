@@ -7,7 +7,7 @@
 // ================================================================================
 import {map, last, get, isEqual, initial} from 'lodash'
 import * as classnames from 'classnames'
-import * as React from 'react'
+import * as React from 'react' // LOL typescript
 import {Save, Folder, Settings, Eye, Rewind} from 'react-feather'
 import {Editor} from 'react-draft-wysiwyg'
 import {EditorState, convertToRaw, convertFromRaw} from 'draft-js'
@@ -21,16 +21,13 @@ const uuid = require('uuid/v4');
 // ================================================================================
 // Framework
 // ================================================================================
-// import {IDefaultProps} from 'projekt/lib/interfaces'
-import {IDefaultProps} from './blah'
+import {IDefaultProps} from './utils'
 import {Slider} from './Slider'
-// import {saveToDisk, ISaveToDiskPayload} from 'projekt/lib/components'
 import {saveToDisk, loadFromDisk, ISaveToDiskPayload} from './save';
 
 // ================================================================================
 // Project
 // ================================================================================
-// import {REPLAY_SPEED} from '../config'
 const REPLAY_SPEED = 100;
 
 // ================================================================================
@@ -41,7 +38,6 @@ import './Midst.css'
 // ================================================================================
 // Model
 // ================================================================================
-
 
 interface IProps
   extends IDefaultProps, ISaveToDiskPayload {
@@ -82,7 +78,7 @@ const noToolbar = {
 const initialState: IState = {
   actionMode: 'entering',
   viewMode: 'full',
-  snapshots: [EditorState.createEmpty()],
+  snapshots: [EditorState.createEmpty().getCurrentContent()],
   replayIndex: 0,
   editorState: EditorState.createEmpty(),
   replayState: EditorState.createEmpty(),
@@ -111,16 +107,7 @@ class Midst extends React.Component<IProps, IState> {
     document.body.addEventListener('keyup', this.onKeyUp)
 
     ipcRenderer.on('parsed-raw-snapshots', (event, { correlationId, snapshots }) => {
-      // TODO - check correlation id
-      // TODO - logic on how to handle raw snapshot data
-      console.log('snapshots!!! they are been parsed', snapshots)
-      this.setState(state => ({
-        snapshots: [...map(snapshots, convertFromRaw), ...state.snapshots],
-        replayIndex: snapshots.length + state.replayIndex
-      }), () => {
-        console.log('okay updated', this.state);
-      })
-
+      this.handleParsedSnapshots({ correlationId, snapshots });
     })
   }
 
@@ -166,7 +153,7 @@ class Midst extends React.Component<IProps, IState> {
               <div className='control file-input' >
                 <Folder />
                 <input type='file'
-                  accept=".mds" // this doesn't work for some reason
+                  accept=".mds" // this doesn't work for some reason (trying to disallow any non-mds files)
                   onChange={this.onFileSelected}
                 />
               </div>
@@ -216,10 +203,7 @@ class Midst extends React.Component<IProps, IState> {
               direction='horizontal'
               value={this.state.replayIndex / (this.state.snapshots.length - 1)}
               onChange={(value) => {
-                console.log('yo value', value);
                 const replayIndex = Math.ceil((this.state.snapshots.length - 1) * value)
-                console.log('new index', replayIndex);
-                console.log('all things', this.state.snapshots.length);
                 this.setState({
                   replayIndex,
                   replayState: this.createEditorState(this.state.snapshots[replayIndex]),
@@ -235,6 +219,23 @@ class Midst extends React.Component<IProps, IState> {
 // ================================================================================
 // Handlers
 // ================================================================================
+  private handleParsedSnapshots = (history) => {
+    // TODO - check correlation id against last request
+    // TODO - logic on how to handle raw snapshot data
+    console.debug('parsed raw snapshots:', history)
+    const snapshots = [
+      // INVESTIGATE - is this map operation expensive? can we batch process async?
+      ...map(history, convertFromRaw),
+      ...state.snapshots
+    ];
+    this.setState(state => ({
+      snapshots,
+      replayIndex: snapshots.length + state.replayIndex
+    }), () => {
+      console.debug('okay i updated the editor with previous snapshots', this.state);
+    });
+  }
+
   private onKeyUp = (evt) => {
     this.setState({heldKeyCode: null})
   }
@@ -267,35 +268,10 @@ class Midst extends React.Component<IProps, IState> {
   public onEditorStateChange = (editorState: EditorState) => {
     const { snapshots } = this.state
     const latestSnapshot = editorState.getCurrentContent();
+    // Only add a snapshot to the history if we actually changed smthg
     if (last(snapshots) !== latestSnapshot) {
       snapshots.push(latestSnapshot);
     }
-    // TODO - check if this includes undo stack
-    // console.group('%cState change snapshot', 'font-weight: bold; color: #0A2F51;');
-    // console.log('latestSnapshot', latestSnapshot);
-    // const lastChangeType = editorState.getLastChangeType();
-    // NOTE - this could be null, and we could ignore
-    // console.log('state change, lastChangeType:', lastChangeType);
-
-    // if (snapshots.length) {
-      // console.group('%cCompare last state', 'font-weight: light; color: #0A2F51;');
-      // console.log('last editor snapshot', this.state.editorState.getCurrentContent().toJSON().blockMap);
-      // console.log('this editor state', latestSnapshot.toJSON().blockMap);
-      // console.groupEnd();
-    // }
-
-    // const undoStack = editorState.getUndoStack();
-    // console.log('state change, undoStack:', undoStack);
-    // const latestUndoableOp = undoStack.get(0); // could also do undoStack._head.value;
-    // console.log('state change, undoStack head:', latestUndoableOp);
-    // if (latestUndoableOp) {
-    //   // TODO - check if this is serializable to record individual characters,
-    //   // or if using this would undo non existent content blocks
-    //   console.log('state change, undoStack head value:', latestUndoableOp);      
-    //   console.log('state change, undoStack head value, json', latestUndoableOp.toJSON());      
-
-    // }
-    // console.groupEnd();
     this.setState({ editorState, snapshots })
   }
 
@@ -319,10 +295,11 @@ class Midst extends React.Component<IProps, IState> {
 
   private save = (evt) => {
     evt.preventDefault()
-    let rawSnapshots = []
+    const rawSnapshots = []
+    console.debug('all snapshots', this.state.snapshots);
     for (const snapshot of this.state.snapshots) {
+      console.debug('hey converting snapshot to raw')
       const rawSnapshot = convertToRaw(snapshot);
-      console.log('raw snapshot:', rawSnapshot);
       rawSnapshots.push(rawSnapshot)
     }
     saveToDisk({
@@ -347,15 +324,15 @@ class Midst extends React.Component<IProps, IState> {
       return;
     }
     const { name, path } = file;
+    // TODO - is there a way to blur anything that's not an MDS file?
     if (!name.endsWith('.mds')) {
       window.alert('I can only load mds files, silly!');
       return;
     }
     loadFromDisk(path).then(({ head, rawSnapshotsJSON }) => {
-      console.log('loaded!')
       const snapshots = map([head], convertFromRaw)
 
-      console.log('sending raw snapshots to main thread');
+      console.debug('sending raw snapshots to main thread');
       ipcRenderer.send('parse-raw-snapshots', {
         rawSnapshotsJSON,
         correlationId: uuid()
@@ -371,22 +348,6 @@ class Midst extends React.Component<IProps, IState> {
     }, (error) => {
       console.error('error loading!', error);
     });
-    // TODO
-    // this.props.saveToDisk.loadDataFromPlainText(
-    //   file, {
-    //     requireExtension: 'mds',
-    //     success: (rawSnapshots) => {
-          // const snapshots = map(rawSnapshots, convertFromRaw)
-    //       this.setState({
-    //         snapshots,
-    //         actionMode: 'entering',
-    //         replayIndex: snapshots.length,
-    //         editorState: this.createEditorState(last(snapshots)),
-    //       })
-    //     },
-    //     error: () => console.error('File error!'),
-    //   },
-    // )
   }
 
 // ================================================================================
@@ -420,6 +381,7 @@ class Midst extends React.Component<IProps, IState> {
   }
 
   private createEditorState(snapshot) {
+    // INVESTIGATE - can we use `createFromBlockArray`
     // return EditorState.createWithContent(ContentState.createFromBlockArray(snapshot))
     return EditorState.createWithContent(snapshot)
   }
